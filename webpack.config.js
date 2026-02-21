@@ -22,7 +22,7 @@ module.exports = {
       },
       // Rule to load shader files as strings
       {
-        test: /\.(glsl|vs|fs|vert|frag)$/,
+        test: /\.(glsl|vs|fs|vert|frag|wgsl)$/,
         exclude: /node_modules/,
         use: ['raw-loader'],
       },

@@ -1,11 +1,6 @@
 declare module '*.css';
 
-declare module '*.glsl' {
+declare module '*.wgsl' {
 	const value: string;
 	export default value;
-}
-
-declare module '*.csv' {
-	const value: string;
-	export default value;	
 }
