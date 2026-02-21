@@ -1,18 +1,19 @@
 {
 	"compilerOptions": {
-	"target": "es5",
-	"module": "esnext",
-	"strict": true,
-	"esModuleInterop": true,
-	"moduleResolution": "node",
-	"skipLibCheck": true,
-	"forceConsistentCasingInFileNames": true,
-	"lib": ["dom", "dom.iterable", "esnext"],
-	"allowJs": true,
-	"allowSyntheticDefaultImports": true,
-	"isolatedModules": true,
-	"baseUrl": "./src",
-	"jsx": "react-jsx"
+    "target": "es2024",
+    "module": "esnext",
+    "strict": true,
+    "esModuleInterop": true,
+    "moduleResolution": "node",
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "lib": ["dom", "dom.iterable", "esnext"],
+    "allowJs": true,
+    "allowSyntheticDefaultImports": true,
+    "isolatedModules": true,
+    "baseUrl": "./src",
+    "jsx": "react-jsx",
+    "types": ["@webgpu/types"]
 	},
 	"include": ["src"]
 }
