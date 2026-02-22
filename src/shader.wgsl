@@ -1,8 +1,12 @@
 const width: f32 = 1536.0;
-const height: f32 = 1200;
+const height: f32 = 1200.0;
 
-const x: i32 = 800;
-const y: i32 = 600;
+struct CoordStruct {
+	x: i32,
+	y: i32,
+};
+ 
+@group(0) @binding(0) var<uniform> coordStruct: CoordStruct;
 
 const lineWidth: f32 = 20 / width;
 
@@ -11,7 +15,7 @@ fn screenXToScaled(x: f32) -> f32 {
 }
 
 fn screenYToScaled(y: f32) -> f32 {
-	return 2.0 * y / height - 1.0;
+	return -(2.0 * y / height - 1.0);
 }
 
 struct LineVertex {
@@ -22,8 +26,8 @@ struct LineVertex {
 @vertex fn vs(
 	@builtin(vertex_index) vertexIndex : u32
 ) -> LineVertex {
-	let fx = f32(x);
-	let fy = f32(y);
+	let fx = f32(coordStruct.x);
+	let fy = f32(coordStruct.y);
 	let scaledX = screenXToScaled(fx);
 	let scaledY = screenYToScaled(fy);
 	let pos = array(
@@ -49,11 +53,13 @@ struct LineVertex {
 @fragment fn fs(fsInput: LineVertex) -> @location(0) vec4f {
 	let back = vec4f(0.0, 0.0, 0.0, 0.0);
 	let color = vec4f(0.0, 0.0, 1.0, 1.0);
+	let targetX = coordStruct.x;
+	let targetY = coordStruct.y;
 	if (fsInput.lineIndex == 1) {
 		let ix: i32 = i32(fsInput.position[0]);
-		return select(back, color, ix >= x && ix < x + 1);
+		return select(back, color, ix >= targetX && ix < targetX + 1);
 	} else {
 		let iy: i32 = i32(fsInput.position[1]);
-		return select(back, color, iy >= y && iy < y + 1);
+		return select(back, color, iy >= targetY && iy < targetY + 2);
 	}
 }

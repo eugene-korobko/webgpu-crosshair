@@ -1,7 +1,7 @@
 import shaderSrc from './shader.wgsl';
 
 type DeepPartial<T> = T extends object ? {
-    [P in keyof T]?: DeepPartial<T[P]>;
+	[P in keyof T]?: DeepPartial<T[P]>;
 } : T;
 
 async function init(): Promise<void> {
@@ -62,6 +62,27 @@ async function init(): Promise<void> {
 		},
 	});
 
+		// 2 items of i32
+	const uniformCoordsBufferSize = 2 * 4;
+	const uniformCoordsBuffer = device.createBuffer({
+		size: uniformCoordsBufferSize,
+		usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,
+	});
+
+	const uniformCoordsValues = new Int32Array(uniformCoordsBufferSize / 4);
+
+	uniformCoordsValues.set([-1, -1], 0);
+
+	const bindGroup = device.createBindGroup({
+		layout: pipeline.getBindGroupLayout(0),
+		entries: [
+			{
+				binding: 0,
+				resource: uniformCoordsBuffer,
+			},
+		],
+	});
+
 	const renderPassDescriptor = {
 		label: 'our basic canvas renderPass',
 		colorAttachments: [
@@ -72,27 +93,37 @@ async function init(): Promise<void> {
 			storeOp: 'store',
 		  },
 		],
-	}as GPURenderPassDescriptor;
+	} as GPURenderPassDescriptor;
 
 	function render() {
-        // Получаем текущую текстуру из canvas context и устанавливаем ее как текстуру для рендеринга
-        (renderPassDescriptor.colorAttachments as GPURenderPassColorAttachment[])[0].view =
-            context!.getCurrentTexture().createView();
-     
-        // создаем шаблон команды, чтобы запускать их
-        const encoder = device!.createCommandEncoder({ label: 'our encoder' });
-     
-        // создаем render pass encoder для установке нашего шаблона
-        const pass = encoder.beginRenderPass(renderPassDescriptor);
-        pass.setPipeline(pipeline);
-        pass.draw(8);
-        pass.end();
-     
-        const commandBuffer = encoder.finish();
-        device!.queue.submit([commandBuffer]);
-      }
-     
-      render();
+		device!.queue.writeBuffer(uniformCoordsBuffer, 0, uniformCoordsValues);
+		// Получаем текущую текстуру из canvas context и устанавливаем ее как текстуру для рендеринга
+		(renderPassDescriptor.colorAttachments as GPURenderPassColorAttachment[])[0].view =
+			context!.getCurrentTexture().createView();
+	 
+		// создаем шаблон команды, чтобы запускать их
+		const encoder = device!.createCommandEncoder({ label: 'our encoder' });
+	 
+		// создаем render pass encoder для установке нашего шаблона
+		const pass = encoder.beginRenderPass(renderPassDescriptor);
+		pass.setPipeline(pipeline);
+		pass.setBindGroup(0, bindGroup);
+		pass.draw(8);
+		pass.end();
+	 
+		const commandBuffer = encoder.finish();
+		device!.queue.submit([commandBuffer]);
+	}
+
+	render();
+
+	canvas.onmousemove = (e: MouseEvent) => {
+		const rect = canvas.getBoundingClientRect();
+		const x = Math.round((e.clientX - rect.left) * window.devicePixelRatio);
+		const y = Math.round((e.clientY - rect.top) * window.devicePixelRatio);
+		uniformCoordsValues.set([x, y], 0);
+		render();
+	};
 }
 
 init();
