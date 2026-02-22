@@ -13,6 +13,7 @@ struct LineStruct {
  
 @group(0) @binding(0) var<uniform> coordStruct: CoordStruct;
 @group(0) @binding(1) var<uniform> linesStruct: LineStruct;
+@group(0) @binding(2) var<uniform> lineColor: vec4f;
 
 fn screenXToScaled(x: f32) -> f32 {
 	return 2.0 * x / width - 1.0;
@@ -84,7 +85,6 @@ struct LineVertex {
 
 @fragment fn fs(fsInput: LineVertex) -> @location(0) vec4f {
 	let back = vec4f(0.0, 0.0, 0.0, 0.0);
-	let color = vec4f(0.0, 0.0, 1.0, 1.0);
 	let targetX = coordStruct.x;
 	let targetY = coordStruct.y;
 	let halfWidth = i32(floor(f32(linesStruct.width) * 0.5));
@@ -96,11 +96,11 @@ struct LineVertex {
 		if (!checkDash(iy, linesStruct.style, linesStruct.width)) {
 			return back;
 		}
-		return select(back, color, ix >= targetX - halfWidth && ix < targetX + halfWidth + correction);
+		return select(back, lineColor, ix >= targetX - halfWidth && ix < targetX + halfWidth + correction);
 	} else {
 		if (!checkDash(ix, linesStruct.style, linesStruct.width)) {
 			return back;
 		}
-		return select(back, color, iy >= targetY - halfWidth && iy < targetY + halfWidth + correction);
+		return select(back, lineColor, iy >= targetY - halfWidth && iy < targetY + halfWidth + correction);
 	}
 }
