@@ -73,14 +73,14 @@ async function init(): Promise<void> {
 
 	uniformCoordsValues.set([-1, -1], 0);
 
-	const uniformLineStyleBufferSize = 4;
+	const uniformLineStyleBufferSize = 4 * 2; // int for width and int for style
 	const uniformLineStyleBuffer = device.createBuffer({
 		size: uniformLineStyleBufferSize,
 		usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,
 	});
 
 	const uniformLineStyleValues = new Int32Array(uniformLineStyleBufferSize / 4);
-	uniformLineStyleValues.set([1], 0);
+	uniformLineStyleValues.set([1, 0], 0);
 
 	const bindGroup = device.createBindGroup({
 		layout: pipeline.getBindGroupLayout(0),
@@ -145,11 +145,19 @@ async function init(): Promise<void> {
 		const val = lineWidthInput.value;
 		const width = parseInt(val);
 		if (width > 0 && width < 10) {
-			console.log(`set width to ${width}`);
 			uniformLineStyleValues.set([width], 0);
 			device!.queue.writeBuffer(uniformLineStyleBuffer, 0, uniformLineStyleValues);
 			render();
 		}
+	};
+
+	const lineStyleSelect = document.getElementById('line-style') as HTMLSelectElement;
+	lineStyleSelect.onchange = () => {
+		const style = parseInt(lineStyleSelect.value);
+		console.log(`style: ${style}`);
+		uniformLineStyleValues.set([style], 1);
+		device!.queue.writeBuffer(uniformLineStyleBuffer, 0, uniformLineStyleValues);
+		render();
 	};
 }
 
