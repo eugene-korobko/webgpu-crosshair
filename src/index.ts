@@ -23,6 +23,7 @@ async function init(): Promise<void> {
 	context.configure({
 		device,
    		format: presentationFormat,
+		alphaMode: 'premultiplied', // Enables transparency
 	});
 
 	const module = device.createShaderModule({
@@ -37,10 +38,27 @@ async function init(): Promise<void> {
 		  module,
 		  entryPoint: 'vs',
 		},
+		primitive: { topology: `triangle-strip` },
 		fragment: {
 		  module,
 		  entryPoint: 'fs',
-		  targets: [{ format: presentationFormat }],
+		  targets: [
+			{
+				format: presentationFormat,
+				blend: {
+					color: {
+						srcFactor: 'src-alpha',
+						dstFactor: 'one-minus-src-alpha',
+						operation: 'add',
+					},
+					alpha: {
+						srcFactor: 'one', // Typically 'one' or 'src-alpha' for alpha channel
+						dstFactor: 'one-minus-src-alpha',
+						operation: 'add',
+					},
+				}
+			}
+		],
 		},
 	});
 
@@ -67,7 +85,7 @@ async function init(): Promise<void> {
         // создаем render pass encoder для установке нашего шаблона
         const pass = encoder.beginRenderPass(renderPassDescriptor);
         pass.setPipeline(pipeline);
-        pass.draw(3);  // вызываем наш vertex shader три раза
+        pass.draw(8);
         pass.end();
      
         const commandBuffer = encoder.finish();

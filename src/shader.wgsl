@@ -1,19 +1,59 @@
-@vertex fn vs(
-    @builtin(vertex_index) vertexIndex : u32
-) -> @builtin(position) vec4f {
-    let pos = array(
-        vec2f( 0.0,  0.5),  // top center
-        vec2f(-0.5, -0.5),  // bottom left
-        vec2f( 0.5, -0.5)   // bottom right
-    );
+const width: f32 = 1536.0;
+const height: f32 = 1200;
 
-    return vec4f(pos[vertexIndex], 0.0, 1.0);
+const x: i32 = 800;
+const y: i32 = 600;
+
+const lineWidth: f32 = 20 / width;
+
+fn screenXToScaled(x: f32) -> f32 {
+	return 2.0 * x / width - 1.0;
 }
 
-@fragment fn fs(@builtin(position) pixelPosition: vec4f) -> @location(0) vec4f {
-    let x: i32 = i32(pixelPosition[0]);
-    let odd: i32 = x % 10;
-    let color1 = vec4f(1.0, 0.0, 0.0, 1.0);
-    let color2 = vec4f(1.0, 0.0, 1.0, 1.0);
-    return select(color1, color2, odd >= 5);
+fn screenYToScaled(y: f32) -> f32 {
+	return 2.0 * y / height - 1.0;
+}
+
+struct LineVertex {
+	@builtin(position) position: vec4f,
+    @location(0) @interpolate(flat) lineIndex: i32,
+}
+
+@vertex fn vs(
+	@builtin(vertex_index) vertexIndex : u32
+) -> LineVertex {
+	let fx = f32(x);
+	let fy = f32(y);
+	let scaledX = screenXToScaled(fx);
+	let scaledY = screenYToScaled(fy);
+	let pos = array(
+		// vertical line
+		vec2f( scaledX - 2 * lineWidth, -1.0),
+		vec2f( scaledX + 2 * lineWidth, -1.0),
+		vec2f( scaledX - 2 * lineWidth, 1.0),
+		vec2f( scaledX + 2 * lineWidth, 1.0),
+
+		// horizontal line
+		vec2f( -1.0, scaledY + 2 * lineWidth),
+		vec2f( -1.0, scaledY - 2 * lineWidth),
+		vec2f( 1.0, scaledY + 2 * lineWidth),
+		vec2f( 1.0, scaledY - 2 * lineWidth)
+	);
+
+ 	var vsOutput: LineVertex;
+	vsOutput.position = vec4f(pos[vertexIndex], 0.0, 1.0);
+	vsOutput.lineIndex = select(1, 2, vertexIndex > 3);
+	return vsOutput;
+}
+
+@fragment fn fs(fsInput: LineVertex) -> @location(0) vec4f {
+	let back = vec4f(0.0, 0.0, 0.0, 0.0);
+	let color = vec4f(0.0, 0.0, 1.0, 1.0);
+	if (fsInput.lineIndex == 1) {
+		let ix: i32 = i32(fsInput.position[0]);
+		return select(back, color, ix >= x && ix < x + 1);
+	} else {
+		let iy: i32 = i32(fsInput.position[1]);
+		return select(back, color, iy >= y && iy < y + 1);
+	}
 }
