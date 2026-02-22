@@ -73,6 +73,15 @@ async function init(): Promise<void> {
 
 	uniformCoordsValues.set([-1, -1], 0);
 
+	const uniformLineStyleBufferSize = 4;
+	const uniformLineStyleBuffer = device.createBuffer({
+		size: uniformLineStyleBufferSize,
+		usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,
+	});
+
+	const uniformLineStyleValues = new Int32Array(uniformLineStyleBufferSize / 4);
+	uniformLineStyleValues.set([1], 0);
+
 	const bindGroup = device.createBindGroup({
 		layout: pipeline.getBindGroupLayout(0),
 		entries: [
@@ -80,6 +89,10 @@ async function init(): Promise<void> {
 				binding: 0,
 				resource: uniformCoordsBuffer,
 			},
+			{
+				binding: 1,
+				resource: uniformLineStyleBuffer,
+			}
 		],
 	});
 
@@ -95,8 +108,9 @@ async function init(): Promise<void> {
 		],
 	} as GPURenderPassDescriptor;
 
+	device!.queue.writeBuffer(uniformLineStyleBuffer, 0, uniformLineStyleValues);
+
 	function render() {
-		device!.queue.writeBuffer(uniformCoordsBuffer, 0, uniformCoordsValues);
 		// Получаем текущую текстуру из canvas context и устанавливаем ее как текстуру для рендеринга
 		(renderPassDescriptor.colorAttachments as GPURenderPassColorAttachment[])[0].view =
 			context!.getCurrentTexture().createView();
@@ -122,7 +136,20 @@ async function init(): Promise<void> {
 		const x = Math.round((e.clientX - rect.left) * window.devicePixelRatio);
 		const y = Math.round((e.clientY - rect.top) * window.devicePixelRatio);
 		uniformCoordsValues.set([x, y], 0);
+		device!.queue.writeBuffer(uniformCoordsBuffer, 0, uniformCoordsValues);
 		render();
+	};
+
+	const lineWidthInput = document.getElementById('line-width') as HTMLInputElement;
+	lineWidthInput.onchange= () => {
+		const val = lineWidthInput.value;
+		const width = parseInt(val);
+		if (width > 0 && width < 10) {
+			console.log(`set width to ${width}`);
+			uniformLineStyleValues.set([width], 0);
+			device!.queue.writeBuffer(uniformLineStyleBuffer, 0, uniformLineStyleValues);
+			render();
+		}
 	};
 }
 

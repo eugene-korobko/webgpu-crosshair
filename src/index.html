@@ -2,8 +2,15 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8"><title>TS GLSL App</title>
+    <style>
+        #toolbar {
+            display: flex;
+            flex-direction: row;
+        }
+    </style>
 </head>
 <body>
+    
     <canvas
         id="glcanvas"
         style="width: 1024px; height: 800px; border: 1px solid black"
@@ -12,5 +19,8 @@
     >
 
     </canvas>
+    <div id="toolbar">
+        Line width: <input id="line-width" value="1" />
+    </div>
 </body>
 </html>
