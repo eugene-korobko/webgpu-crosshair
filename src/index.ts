@@ -184,7 +184,18 @@ async function init(): Promise<void> {
 	render();
 
 	let invalidated = false;
+
+	const fpsLabel = document.getElementById('fps-label') as HTMLDivElement;
+
+	let frameTimes: number[] = [];
 	const paint = () => {
+		frameTimes.push(Date.now());
+		frameTimes = frameTimes.slice(-50);
+		if (frameTimes.length > 1) {
+			const diff = frameTimes[frameTimes.length - 1] - frameTimes[0];
+			const fps = (frameTimes.length - 1) / diff;
+			fpsLabel.innerText = `FPS: ${(1000 * fps).toFixed(2)}`;
+		}
 		if (invalidated) {
 			render();
 			invalidated = false;
