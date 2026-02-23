@@ -183,13 +183,23 @@ async function init(): Promise<void> {
 
 	render();
 
+	let invalidated = false;
+	const paint = () => {
+		if (invalidated) {
+			render();
+			invalidated = false;
+		}
+		requestAnimationFrame(paint);
+	}
+	requestAnimationFrame(paint);
+
 	canvas.onmousemove = (e: MouseEvent) => {
 		const rect = canvas.getBoundingClientRect();
 		const x = Math.round((e.clientX - rect.left) * window.devicePixelRatio);
 		const y = Math.round((e.clientY - rect.top) * window.devicePixelRatio);
 		uniformCoordsValues.set([x, y], 0);
 		device!.queue.writeBuffer(uniformCoordsBuffer, 0, uniformCoordsValues);
-		render();
+		invalidated = true;
 	};
 
 	const lineWidthInput = document.getElementById('line-width') as HTMLInputElement;
@@ -199,7 +209,7 @@ async function init(): Promise<void> {
 		if (width > 0 && width < 10) {
 			uniformLineStyleValues.set([width], 0);
 			device!.queue.writeBuffer(uniformLineStyleBuffer, 0, uniformLineStyleValues);
-			render();
+			invalidated = true;
 		}
 	};
 
@@ -208,7 +218,7 @@ async function init(): Promise<void> {
 		const style = parseInt(lineStyleSelect.value);
 		uniformLineStyleValues.set([style], 1);
 		device!.queue.writeBuffer(uniformLineStyleBuffer, 0, uniformLineStyleValues);
-		render();
+		invalidated = true;
 	};
 
 	const lineColorInput = document.getElementById('line-color') as HTMLInputElement;
@@ -218,11 +228,12 @@ async function init(): Promise<void> {
 			const parsed = hexToNormalizedRGBA(val);
 			uniformLineColorValues.set(parsed, 0);
 			device!.queue.writeBuffer(uniformLineColorBuffer, 0, uniformLineColorValues);
-			render();
+			invalidated = true;
 		} catch {
 		}
 	};
 }
 
 init();
+
 
