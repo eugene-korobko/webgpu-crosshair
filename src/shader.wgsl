@@ -1,5 +1,10 @@
-const width: f32 = 1536.0;
-const height: f32 = 1200.0;
+struct SizeStruct {
+	width: i32,
+	height: i32,
+};
+
+//const width: f32 = 1536.0;
+//const height: f32 = 1200.0;
 
 struct CoordStruct {
 	x: i32,
@@ -14,13 +19,14 @@ struct LineStruct {
 @group(0) @binding(0) var<uniform> coordStruct: CoordStruct;
 @group(0) @binding(1) var<uniform> linesStruct: LineStruct;
 @group(0) @binding(2) var<uniform> lineColor: vec4f;
+@group(0) @binding(3) var<uniform> screenSize: SizeStruct;
 
 fn screenXToScaled(x: f32) -> f32 {
-	return 2.0 * x / width - 1.0;
+	return 2.0 * x / f32(screenSize.width) - 1.0;
 }
 
 fn screenYToScaled(y: f32) -> f32 {
-	return -(2.0 * y / height - 1.0);
+	return -(2.0 * y / f32(screenSize.height) - 1.0);
 }
 
 fn checkDash(offset: i32, style: i32, lineWidth: i32) -> bool {
@@ -59,7 +65,7 @@ struct LineVertex {
 	let fy = f32(coordStruct.y);
 	let scaledX = screenXToScaled(fx);
 	let scaledY = screenYToScaled(fy);
-	let lineWidth = f32(linesStruct.width * 4) / width;
+	let lineWidth = f32(linesStruct.width * 4) / f32(screenSize.width);
 
 	let pos = array(
 		// vertical line

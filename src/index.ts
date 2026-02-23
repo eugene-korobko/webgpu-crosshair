@@ -129,6 +129,14 @@ async function init(): Promise<void> {
 	const uniformLineColorValues = new Float32Array(uniformLineColorBufferSize / 4);
 	uniformLineColorValues.set([1.0, 1.0, 1.0, 1.0], 0);
 
+	const uniformScreenSizeBufferSize = 4 + 4;
+	const uniformScreenSizeBuffer = device.createBuffer({
+		size: uniformScreenSizeBufferSize,
+		usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,
+	});
+	const uniformScreenSizeValues = new Int32Array(uniformScreenSizeBufferSize / 4);
+	uniformScreenSizeValues.set([1536, 1200], 0);
+
 	const bindGroup = device.createBindGroup({
 		layout: pipeline.getBindGroupLayout(0),
 		entries: [
@@ -143,6 +151,10 @@ async function init(): Promise<void> {
 			{
 				binding: 2,
 				resource: uniformLineColorBuffer,
+			},
+						{
+				binding: 3,
+				resource: uniformScreenSizeBuffer,
 			}
 		],
 	});
@@ -161,6 +173,7 @@ async function init(): Promise<void> {
 
 	device!.queue.writeBuffer(uniformLineStyleBuffer, 0, uniformLineStyleValues);
 	device!.queue.writeBuffer(uniformLineColorBuffer, 0, uniformLineColorValues);
+	device!.queue.writeBuffer(uniformScreenSizeBuffer, 0, uniformScreenSizeValues);
 
 	function render() {
 		// Получаем текущую текстуру из canvas context и устанавливаем ее как текстуру для рендеринга
@@ -243,8 +256,26 @@ async function init(): Promise<void> {
 		} catch {
 		}
 	};
-}
+
+	const observer = new ResizeObserver((entries: ResizeObserverEntry[]) => {
+		for (const entry of entries) {
+			// devicePixelContentBoxSize is an array (usually one item)
+			if (entry.devicePixelContentBoxSize) {
+				const { inlineSize: width, blockSize: height } = entry.devicePixelContentBoxSize[0];
+				
+				// Update canvas dimensions to match physical pixels
+				canvas.width = width;
+				canvas.height = height;
+				uniformScreenSizeValues.set([width, height], 0);
+				device!.queue.writeBuffer(uniformScreenSizeBuffer, 0, uniformScreenSizeValues);
+				invalidated = true;
+				
+				console.log(`Resized to physical pixels: ${width}x${height}`);
+			}
+		}
+	});
+
+	observer.observe(canvas, { box: 'device-pixel-content-box' });
+};
 
 init();
-
-
