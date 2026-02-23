@@ -73,7 +73,7 @@ async function init(): Promise<void> {
 		  module,
 		  entryPoint: 'vs',
 		},
-		primitive: { topology: `triangle-strip` },
+		primitive: { topology: `triangle-list` },
 		fragment: {
 		  module,
 		  entryPoint: 'fs',
@@ -174,7 +174,7 @@ async function init(): Promise<void> {
 		const pass = encoder.beginRenderPass(renderPassDescriptor);
 		pass.setPipeline(pipeline);
 		pass.setBindGroup(0, bindGroup);
-		pass.draw(8);
+		pass.draw(12);
 		pass.end();
 	 
 		const commandBuffer = encoder.finish();

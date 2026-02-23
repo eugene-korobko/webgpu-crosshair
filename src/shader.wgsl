@@ -60,12 +60,13 @@ struct LineVertex {
 	let scaledX = screenXToScaled(fx);
 	let scaledY = screenYToScaled(fy);
 	let lineWidth = f32(linesStruct.width * 4) / width;
-	// TODO: There is an issue here
-	// we use triangle_strip, but we should use triangle_list
-	// to draw two lines
+
 	let pos = array(
 		// vertical line
 		vec2f( scaledX - 2 * lineWidth, -1.0),
+		vec2f( scaledX + 2 * lineWidth, -1.0),
+		vec2f( scaledX - 2 * lineWidth, 1.0),
+
 		vec2f( scaledX + 2 * lineWidth, -1.0),
 		vec2f( scaledX - 2 * lineWidth, 1.0),
 		vec2f( scaledX + 2 * lineWidth, 1.0),
@@ -74,12 +75,15 @@ struct LineVertex {
 		vec2f( -1.0, scaledY + 2 * lineWidth),
 		vec2f( -1.0, scaledY - 2 * lineWidth),
 		vec2f( 1.0, scaledY + 2 * lineWidth),
+
+		vec2f( -1.0, scaledY - 2 * lineWidth),
+		vec2f( 1.0, scaledY + 2 * lineWidth),
 		vec2f( 1.0, scaledY - 2 * lineWidth)
 	);
 
  	var vsOutput: LineVertex;
 	vsOutput.position = vec4f(pos[vertexIndex], 0.0, 1.0);
-	vsOutput.lineIndex = select(1, 2, vertexIndex > 3);
+	vsOutput.lineIndex = select(1, 2, vertexIndex > 5);
 	return vsOutput;
 }
 
