@@ -226,16 +226,40 @@ async function init(): Promise<void> {
 		invalidated = true;
 	};
 
-	const lineWidthInput = document.getElementById('line-width') as HTMLInputElement;
-	lineWidthInput.onchange= () => {
+	const updateLineWidth = () => {
+		removeMediaListener();
+		const mql = window.matchMedia('screen');
+		mql.addEventListener("change", updateLineWidth);
 		const val = lineWidthInput.value;
-		const width = parseInt(val);
-		if (width > 0 && width < 10) {
+		let width = parseInt(val);
+		console.log(`update line width from ${width} with dpr ${window.devicePixelRatio}`);
+		if (width > 0 && width < 25) {
+
+			width = Math.floor(width * window.devicePixelRatio);
 			uniformLineStyleValues.set([width], 0);
 			device!.queue.writeBuffer(uniformLineStyleBuffer, 0, uniformLineStyleValues);
 			invalidated = true;
 		}
 	};
+
+	const lineWidthInput = document.getElementById('line-width') as HTMLInputElement;
+	lineWidthInput.onchange = updateLineWidth;
+
+	let removeMediaListener = () => {};
+	const updatePixelRatio = () => {
+		console.log(`updatePixelRaio: ${window.devicePixelRatio}`);
+		removeMediaListener();
+		const mqString = `(resolution: ${window.devicePixelRatio}dppx)`;
+		const media = matchMedia(mqString);
+		media.addEventListener("change", updatePixelRatio);
+		removeMediaListener = () => {
+			media.removeEventListener("change", updatePixelRatio);
+		};
+		updateLineWidth();
+	};
+
+	updatePixelRatio();
+	window.addEventListener("resize", updatePixelRatio);
 
 	const lineStyleSelect = document.getElementById('line-style') as HTMLSelectElement;
 	lineStyleSelect.onchange = () => {
@@ -257,6 +281,8 @@ async function init(): Promise<void> {
 		}
 	};
 
+	let pixelContentBoxSupported = true;
+
 	const observer = new ResizeObserver((entries: ResizeObserverEntry[]) => {
 		for (const entry of entries) {
 			// devicePixelContentBoxSize is an array (usually one item)
@@ -271,11 +297,34 @@ async function init(): Promise<void> {
 				invalidated = true;
 				
 				console.log(`Resized to physical pixels: ${width}x${height}`);
+			} else if (!pixelContentBoxSupported) {
+				let width, height: number;
+				if (entry.contentBoxSize) {
+					// Access width and height from the first item in the array
+					width = entry.contentBoxSize[0].inlineSize;
+					height = entry.contentBoxSize[0].blockSize;
+				} 
+				// Fallback to the older contentRect property if necessary
+				else {
+					width = entry.contentRect.width;
+					height = entry.contentRect.height;
+				}
+				width *= window.devicePixelRatio;
+				height *= window.devicePixelRatio;
+				uniformScreenSizeValues.set([width, height], 0);
+				device!.queue.writeBuffer(uniformScreenSizeBuffer, 0, uniformScreenSizeValues);
+				invalidated = true;
 			}
 		}
 	});
 
-	observer.observe(canvas, { box: 'device-pixel-content-box' });
+	try {
+		observer.observe(canvas, { box: 'device-pixel-content-box' });
+	} catch {
+		console.log('device-pixel-content-box is not supported');
+		pixelContentBoxSupported = false;
+		observer.observe(canvas);
+	}
 };
 
 init();
